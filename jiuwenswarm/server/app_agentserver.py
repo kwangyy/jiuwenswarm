@@ -232,6 +232,12 @@ async def _run(host: str, port: int) -> None:
             shutdown_agent_observability()
         except Exception as exc:
             logger.warning("[AgentServer] agent observability shutdown failed: %s", exc)
+        # Flush any still-open trajectory recordings (no-op unless enabled).
+        try:
+            from jiuwenswarm.server.runtime.trajectory_recording import close_trajectory_recorder
+            await close_trajectory_recorder()
+        except Exception as exc:
+            logger.warning("[AgentServer] trajectory recorder shutdown failed: %s", exc)
         logger.info("[AgentServer] stopped")
 
 

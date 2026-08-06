@@ -5437,6 +5437,11 @@ class JiuWenSwarmDeepAdapter:
 
         await asyncio.sleep(0)
         await self._instance.ensure_initialized()
+        # Attach before any session exists: sessions only pick up trajectory
+        # capture handlers at creation time.
+        from jiuwenswarm.server.runtime.trajectory_recording import maybe_attach_trajectory_recorder
+
+        maybe_attach_trajectory_recorder(self._instance)
         initial_runtime_workspace = self._project_dir or str(
             get_default_project_session_workspace_dir()
         )

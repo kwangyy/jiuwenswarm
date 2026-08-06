@@ -596,6 +596,11 @@ class JiuwenSwarmCodeAdapter(JiuWenSwarmDeepAdapter):
             None,
             lambda: asyncio.run(self._instance.ensure_initialized()),
         )
+        # Attach before any session exists: sessions only pick up trajectory
+        # capture handlers at creation time.
+        from jiuwenswarm.server.runtime.trajectory_recording import maybe_attach_trajectory_recorder
+
+        maybe_attach_trajectory_recorder(self._instance)
         # 修正 .agent_history 写入路径：openjiuwen 文件工具默认将
         # .agent_history 写到 Workspace.root_path（即项目目录），
         # 这里覆写为 agent 系统 workspace，避免污染用户项目目录。

@@ -2603,6 +2603,13 @@ class AgentWebSocketServer:
         from jiuwenswarm.server.runtime.agent_adapter.interface_deep import ensure_persistent_checkpointer
 
         await ensure_persistent_checkpointer()
+        # 前端可能刚在设置面板切换了轨迹录制开关（Gateway 写 config.yaml），
+        # 每轮对话前同步一次，让关闭对进行中的会话立即生效。
+        from jiuwenswarm.server.runtime.trajectory_recording import (
+            sync_trajectory_recording_enabled,
+        )
+
+        sync_trajectory_recording_enabled()
         channel_id = request.channel_id or "default"
         session_id = request.session_id or "default"
         current_task = asyncio.current_task()

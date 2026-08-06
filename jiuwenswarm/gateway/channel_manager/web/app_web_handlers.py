@@ -67,6 +67,7 @@ from jiuwenswarm.common.config import (
     update_a2ui_in_config,
     update_updater_in_config,
     update_proactive_recommendation_in_config,
+    update_trajectory_recording_enabled_in_config,
 )
 from jiuwenswarm.common.kv_cache_affinity_config import (
     ASCEND_AFFINITY_PROVIDER,
@@ -815,6 +816,7 @@ _CONFIG_YAML_KEYS = frozenset({
     "proactive_recommendation_max_rounds_per_tick",
     "swarmflow_enabled",
     "setup_guide_enabled",
+    "trajectory_recording_enabled",
 })
 
 # 微信通道数值参数的取值范围：(下限, 上限, 是否必须为整数)。均为秒，必须为有限正数。
@@ -1697,6 +1699,8 @@ def _register_web_handlers(bind: WebHandlersBindParams) -> None:
                 payload["free_search_bing_enabled"] = "false"
             payload.update(_flatten_modes_team_for_config_panel(raw))
             # Proactive recommendation — use resolved config (env vars expanded)
+            traj_cfg = raw.get("trajectory_recording") or {}
+            payload["trajectory_recording_enabled"] = "true" if traj_cfg.get("enabled", False) else "false"
             resolved = get_config()
             proactive_cfg = resolved.get("proactive_recommendation") or {}
             payload["proactive_recommendation_enabled"] = "true" if proactive_cfg.get("enabled", False) else "false"
@@ -1733,6 +1737,7 @@ def _register_web_handlers(bind: WebHandlersBindParams) -> None:
             payload.setdefault("proactive_recommendation_enabled", "false")
             payload.setdefault("proactive_recommendation_max_recommend_per_day", "10")
             payload.setdefault("proactive_recommendation_max_rounds_per_tick", "20")
+            payload.setdefault("trajectory_recording_enabled", "false")
         await channel.send_response(ws, req_id, ok=True, payload=payload)
 
     def _persist_env_updates(updates: dict[str, str]) -> None:
@@ -1920,6 +1925,8 @@ def _register_web_handlers(bind: WebHandlersBindParams) -> None:
                     if not ok:
                         raise _ConfigBadRequest(error or "invalid A2UI config")
                     update_a2ui_in_config(update)
+                elif param_key == "trajectory_recording_enabled":
+                    update_trajectory_recording_enabled_in_config(parsed)
                 elif param_key == "proactive_recommendation_enabled":
                     update_proactive_recommendation_in_config({"enabled": parsed})
                 elif param_key == "proactive_recommendation_max_recommend_per_day":

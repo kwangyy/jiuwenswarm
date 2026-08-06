@@ -470,6 +470,22 @@ debug_trace:
     redact_prompts: false           # 脱敏 prompt/completion（密钥字段始终打码）
     redact_completions: false
 
+# ============================================================
+# Trajectory 录制（openjiuwen TrajectoryRecorder）配置
+# ============================================================
+# 录制 agent.* / code.* 模式每次运行的完整轨迹（LLM 步骤、工具步骤、
+# token 用量、压缩状态），落盘为 JSON。子 agent 通过 lineage 一并录制；
+# 跨进程/远程 agent 不可见。需要 openjiuwen 带 core.session.trajectory
+# 模块（trajectory-observability 分支），否则开启后仅告警一次并保持关闭。
+# ============================================================
+trajectory_recording:
+  enabled: false                    # 总开关
+  output_dir: ""                    # 输出根目录，默认 ~/.jiuwenswarm/agent/.trajectories（与 agent/.logs 并列）
+  record_llm_input_digest: false    # 每个 LLM 步附带发送 prompt 的逐消息摘要（哈希/长度）
+  # 按 session id 前缀跳过录制（默认跳过 Gateway 心跳探活的 heartbeat_* 会话；
+  # 设为 [] 则全部录制）
+  # exclude_session_prefixes: ["heartbeat_"]
+
 react:
   agent_name: main_agent
   enable_task_loop: true

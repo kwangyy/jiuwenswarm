@@ -873,7 +873,8 @@
       "proactiveEnabled": "启用主动推荐",
       "proactiveTickInterval": "检查间隔（分钟）",
       "proactiveMaxPerDay": "每日推荐上限",
-      "proactiveMaxRounds": "每次检查对话轮数"
+      "proactiveMaxRounds": "每次检查对话轮数",
+      "trajectoryRecordingEnabled": "录制运行轨迹"
     },
     "defaults": {
       "teamLeaderDisplayName": "团队领导",
@@ -1059,7 +1060,8 @@
       "memory": { "label": "记忆系统敏感信息过滤", "hint": "配置禁止写入记忆的敏感信息类型" },
       "email": { "label": "邮箱配置", "hint": "邮件账号与令牌参数" },
       "other": { "label": "其他配置", "hint": "未归类的扩展参数" },
-      "proactive": { "label": "主动推荐", "hint": "自动分析用户需求，主动提供建议；调度频率请在定时任务面板调整" }
+      "proactive": { "label": "主动推荐", "hint": "自动分析用户需求，主动提供建议；调度频率请在定时任务面板调整" },
+      "trajectory": { "label": "轨迹录制", "hint": "把每次运行的完整轨迹（LLM 步骤、工具调用、token 用量）以 JSON 落盘到 ~/.jiuwenswarm/agent/.trajectories。关闭立即生效；开启从下一个新会话开始生效" }
     },
     "booleanLabels": {
       "evolutionAutoScan": "自动检测可演进信号",

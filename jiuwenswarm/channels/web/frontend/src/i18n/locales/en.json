@@ -873,7 +873,8 @@
       "proactiveEnabled": "Enable proactive recommendation",
       "proactiveTickInterval": "Check interval (minutes)",
       "proactiveMaxPerDay": "Daily recommendation limit",
-      "proactiveMaxRounds": "Max rounds per check"
+      "proactiveMaxRounds": "Max rounds per check",
+      "trajectoryRecordingEnabled": "Record run trajectories"
     },
     "defaults": {
       "teamLeaderDisplayName": "Team Leader",
@@ -1062,6 +1063,10 @@
       "proactive": {
         "label": "Proactive Recommendation",
         "hint": "Automatically analyze user needs and proactively offer suggestions; adjust the schedule in the Cron panel"
+      },
+      "trajectory": {
+        "label": "Trajectory Recording",
+        "hint": "Record each run's full trajectory (LLM steps, tool calls, token usage) as JSON under ~/.jiuwenswarm/agent/.trajectories. Turning off stops recording immediately; turning on takes effect from the next conversation"
       }
     },
     "booleanLabels": {

@@ -413,6 +413,7 @@ function classifyKey(key: string): string {
   if (SWARMFLOW_KEYS.has(key)) return "swarmflow";
   if (SYMPHONY_KEYS.has(key)) return "symphony";
   if (PROACTIVE_KEYS.has(key)) return "proactive";
+  if (key === "trajectory_recording_enabled") return "trajectory";
   if (key === "context_engine_enabled") return "context_engine";
   if (key === "kv_cache_release_enabled" || key === "kv_cache_affinity_enabled") return "kv_cache_affinity";
   if (key === "permissions_enabled") return "permissions";
@@ -572,6 +573,7 @@ function getGroupToneClass(tag: string): string {
   if (tag === "symphony") return "text-amber-500 bg-amber-500/10 border-amber-500/20";
   if (tag === "skill_retrieval") return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
   if (tag === "proactive") return "text-sky-500 bg-sky-500/10 border-sky-500/20";
+  if (tag === "trajectory") return "text-teal-500 bg-teal-500/10 border-teal-500/20";
   if (tag === "email") return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
   return "text-text-muted bg-secondary/70 border-border";
 }
@@ -601,7 +603,8 @@ function isBooleanKey(key: string): boolean {
     key === "swarmflow_enabled" ||
     SYMPHONY_BOOLEAN_KEYS.has(key) ||
     SKILL_RETRIEVAL_BOOLEAN_KEYS.has(key) ||
-    PROACTIVE_BOOLEAN_KEYS.has(key)
+    PROACTIVE_BOOLEAN_KEYS.has(key) ||
+    key === "trajectory_recording_enabled"
   );
 }
 
@@ -663,6 +666,7 @@ function getBooleanKeyLabel(key: string, t: (key: string) => string): string {
     symphony_dynamic_graph_enabled: t('config.booleanLabels.dynamicGraph'),
     skill_retrieval_enabled: t('config.booleanLabels.enabled'),
     proactive_recommendation_enabled: t('config.booleanLabels.enabled'),
+    trajectory_recording_enabled: t('config.booleanLabels.enabled'),
   };
   return labels[key] ?? key;
 }
@@ -714,6 +718,7 @@ function getGroupMeta(t: (key: string) => string): Record<string, { label: strin
     symphony: { label: t('config.groups.symphony.label'), order: 10.4, hint: t('config.groups.symphony.hint') },
     skill_retrieval: { label: t('config.groups.skillRetrieval.label'), order: 10.5, hint: t('config.groups.skillRetrieval.hint') },
     proactive: { label: t('config.groups.proactive.label'), order: 10.6, hint: t('config.groups.proactive.hint') },
+    trajectory: { label: t('config.groups.trajectory.label'), order: 10.7, hint: t('config.groups.trajectory.hint') },
     memory: { label: t('config.groups.memory.label'), order: 11, hint: t('config.groups.memory.hint') },
     email: { label: t('config.groups.email.label'), order: 12, hint: t('config.groups.email.hint') },
     other: { label: t('config.groups.other.label'), order: 13, hint: t('config.groups.other.hint') },
@@ -761,6 +766,7 @@ const KEY_DISPLAY_I18N: Record<string, string> = {
   proactive_recommendation_enabled: "config.keys.proactiveEnabled",
   proactive_recommendation_max_recommend_per_day: "config.keys.proactiveMaxPerDay",
   proactive_recommendation_max_rounds_per_tick: "config.keys.proactiveMaxRounds",
+  trajectory_recording_enabled: "config.keys.trajectoryRecordingEnabled",
 };
 const KEY_PLACEHOLDER_I18N: Record<string, string> = {
   memory_forbidden_description: "config.keys.memoryForbiddenDescriptionPlaceholder",

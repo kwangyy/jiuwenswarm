@@ -725,6 +725,15 @@ def update_setup_guide_enabled_in_config(value: bool) -> None:
     update_config(mutator)
 
 
+def update_trajectory_recording_enabled_in_config(value: bool) -> None:
+    """更新 trajectory_recording.enabled（轨迹录制开关）并写回。"""
+    data = load_yaml_round_trip(CONFIG_YAML_PATH)
+    if "trajectory_recording" not in data or data["trajectory_recording"] is None:
+        data["trajectory_recording"] = {}
+    data["trajectory_recording"]["enabled"] = value
+    dump_yaml_round_trip(CONFIG_YAML_PATH, data)
+
+
 def update_proactive_recommendation_in_config(updates: dict[str, Any]) -> None:
     """更新 proactive_recommendation 配置段并写回。"""
     data = load_yaml_round_trip(CONFIG_YAML_PATH)
