@@ -450,13 +450,7 @@ class TestBrowserMoveStdioClientOwnerTask:
     @pytest.mark.asyncio
     async def test_disconnect_not_swallow_cancelled_error(self):
         """Verify that CancelledError is re-raised, not swallowed."""
-        import importlib.util
-        import sys
-        spec = importlib.util.spec_from_file_location("browser_move_stdio_client", "jiuwenswarm/agents/harness/common/tools/browser-move/src/playwright_runtime/clients/stdio_client.py")
-        browser_move_stdio_client = importlib.util.module_from_spec(spec)
-        sys.modules["browser_move_stdio_client"] = browser_move_stdio_client
-        spec.loader.exec_module(browser_move_stdio_client)
-        BrowserMoveStdioClient = browser_move_stdio_client.BrowserMoveStdioClient
+        from openjiuwen.harness.tools.browser_move.clients.stdio_client import BrowserMoveStdioClient
         from openjiuwen.core.foundation.tool import McpServerConfig
 
         cfg = McpServerConfig(
@@ -487,13 +481,7 @@ class TestBrowserMoveStdioClientOwnerTask:
     @pytest.mark.asyncio
     async def test_disconnect_with_timeout(self):
         """Verify that disconnect respects timeout."""
-        import importlib.util
-        import sys
-        spec = importlib.util.spec_from_file_location("browser_move_stdio_client", "jiuwenswarm/agents/harness/common/tools/browser-move/src/playwright_runtime/clients/stdio_client.py")
-        browser_move_stdio_client = importlib.util.module_from_spec(spec)
-        sys.modules["browser_move_stdio_client"] = browser_move_stdio_client
-        spec.loader.exec_module(browser_move_stdio_client)
-        BrowserMoveStdioClient = browser_move_stdio_client.BrowserMoveStdioClient
+        from openjiuwen.harness.tools.browser_move.clients.stdio_client import BrowserMoveStdioClient
         from openjiuwen.core.foundation.tool import McpServerConfig
 
         cfg = McpServerConfig(
@@ -521,13 +509,7 @@ class TestBrowserMoveStdioClientOwnerTask:
     @pytest.mark.asyncio
     async def test_force_close_cleans_up_owner_task(self):
         """Verify that _force_close properly cleans up the owner task."""
-        import importlib.util
-        import sys
-        spec = importlib.util.spec_from_file_location("browser_move_stdio_client", "jiuwenswarm/agents/harness/common/tools/browser-move/src/playwright_runtime/clients/stdio_client.py")
-        browser_move_stdio_client = importlib.util.module_from_spec(spec)
-        sys.modules["browser_move_stdio_client"] = browser_move_stdio_client
-        spec.loader.exec_module(browser_move_stdio_client)
-        BrowserMoveStdioClient = browser_move_stdio_client.BrowserMoveStdioClient
+        from openjiuwen.harness.tools.browser_move.clients.stdio_client import BrowserMoveStdioClient
         from openjiuwen.core.foundation.tool import McpServerConfig
 
         cfg = McpServerConfig(
@@ -558,13 +540,7 @@ class TestBrowserMoveStdioClientOwnerTask:
     @pytest.mark.asyncio
     async def test_connect_failure_cleans_up_owner_task(self):
         """Verify that failed connect properly cleans up the owner task."""
-        import importlib.util
-        import sys
-        spec = importlib.util.spec_from_file_location("browser_move_stdio_client", "jiuwenswarm/agents/harness/common/tools/browser-move/src/playwright_runtime/clients/stdio_client.py")
-        browser_move_stdio_client = importlib.util.module_from_spec(spec)
-        sys.modules["browser_move_stdio_client"] = browser_move_stdio_client
-        spec.loader.exec_module(browser_move_stdio_client)
-        BrowserMoveStdioClient = browser_move_stdio_client.BrowserMoveStdioClient
+        from openjiuwen.harness.tools.browser_move.clients.stdio_client import BrowserMoveStdioClient
         from openjiuwen.core.foundation.tool import McpServerConfig
 
         cfg = McpServerConfig(
@@ -589,13 +565,7 @@ class TestBrowserMoveStdioClientOwnerTask:
     @pytest.mark.asyncio
     async def test_disconnect_after_disconnect_is_idempotent(self):
         """Verify that calling disconnect multiple times is safe."""
-        import importlib.util
-        import sys
-        spec = importlib.util.spec_from_file_location("browser_move_stdio_client", "jiuwenswarm/agents/harness/common/tools/browser-move/src/playwright_runtime/clients/stdio_client.py")
-        browser_move_stdio_client = importlib.util.module_from_spec(spec)
-        sys.modules["browser_move_stdio_client"] = browser_move_stdio_client
-        spec.loader.exec_module(browser_move_stdio_client)
-        BrowserMoveStdioClient = browser_move_stdio_client.BrowserMoveStdioClient
+        from openjiuwen.harness.tools.browser_move.clients.stdio_client import BrowserMoveStdioClient
         from openjiuwen.core.foundation.tool import McpServerConfig
 
         cfg = McpServerConfig(
