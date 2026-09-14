@@ -1,6 +1,6 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
 
-"""Load-aware subagent prompt extension for browser delegation."""
+"""Load-aware subagent prompt extension for browser / desktop delegation."""
 
 from __future__ import annotations
 
@@ -10,10 +10,13 @@ from openjiuwen.harness.rails.subagent import SubagentRail
 from jiuwenswarm.agents.harness.common.prompt.browser_task_prompt import (
     build_browser_task_prompt,
 )
+from jiuwenswarm.agents.harness.common.prompt.cua_task_prompt import (
+    build_cua_task_prompt,
+)
 
 
 class BrowserTaskPromptRail(SubagentRail):
-    """Append browser policy when the browser subagent is available."""
+    """Append browser / desktop routing policy for the mounted subagents."""
 
     def __init__(
         self,
@@ -36,17 +39,24 @@ class BrowserTaskPromptRail(SubagentRail):
         ctx: AgentCallbackContext,
         language: str,
     ) -> str | None:
-        if not self._has_browser_agent(ctx.agent):
+        mounted = self._mounted_subagent_names(ctx.agent)
+        has_browser = "browser_agent" in mounted
+        has_cua = "cua_agent" in mounted
+        sections: list[str] = []
+        if has_browser:
+            sections.append(build_browser_task_prompt(language))
+        if has_cua:
+            sections.append(
+                build_cua_task_prompt(language, browser_available=has_browser)
+            )
+        if not sections:
             return None
-        return build_browser_task_prompt(language)
+        return "\n\n".join(sections)
 
-    def _has_browser_agent(self, agent: object) -> bool:
+    def _mounted_subagent_names(self, agent: object) -> set[str]:
         deep_config = getattr(agent, "deep_config", None)
         subagents = getattr(deep_config, "subagents", None) or []
-        return any(
-            self._extract_agent_meta(spec)[0] == "browser_agent"
-            for spec in subagents
-        )
+        return {self._extract_agent_meta(spec)[0] for spec in subagents}
 
 
 __all__ = ["BrowserTaskPromptRail"]

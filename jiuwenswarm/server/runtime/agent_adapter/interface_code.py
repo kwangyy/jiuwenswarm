@@ -77,6 +77,7 @@ from jiuwenswarm.agents.harness.common.browser_defaults import (
 )
 from jiuwenswarm.agents.harness.common.cua_defaults import (
     DEFAULT_CUA_AGENT_MAX_ITERATIONS,
+    build_cua_agent_card,
     resolve_cua_factory_options,
 )
 from jiuwenswarm.agents.harness.code.prompt.code_prompt_builder import (
@@ -2001,6 +2002,7 @@ class JiuwenSwarmCodeAdapter(JiuWenSwarmDeepAdapter):
             if self._is_subagent_enabled(cua_agent_cfg):
                 cua_spec = build_cua_agent_config(
                     model,
+                    card=build_cua_agent_card(resolved_language),
                     workspace=workspace,
                     sys_operation=sys_operation,
                     language=resolved_language,

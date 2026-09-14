@@ -48,6 +48,7 @@ from jiuwenswarm.agents.harness.common.browser_defaults import (
 from jiuwenswarm.agents.harness.common.cua_defaults import (
     DEFAULT_CUA_AGENT_MAX_ITERATIONS,
     DEFAULT_CUA_SNAPSHOT_KEEP_LAST_K,
+    build_cua_agent_card,
 )
 from jiuwenswarm.agents.swarm.context import SwarmBuildContext
 from jiuwenswarm.agents.swarm.providers.code_rails import (
@@ -296,6 +297,7 @@ def build_swarm_cua_agent(factory_kwargs: dict[str, Any], ctx: SwarmBuildContext
         return None
     spec = build_cua_agent_config(
         model,
+        card=build_cua_agent_card(inp.language),
         workspace=str(inp.workspace_root or "./"),
         sys_operation=parent_sys_operation(ctx),
         language=inp.language,

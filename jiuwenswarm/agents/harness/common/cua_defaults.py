@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from openjiuwen.core.single_agent.schema.agent_card import AgentCard
+
 logger = logging.getLogger(__name__)
 
 # Mirrors agent-core's ``create_cua_agent`` default: a perceive-act-verify loop
@@ -16,6 +18,34 @@ DEFAULT_CUA_AGENT_MAX_ITERATIONS = 25
 DEFAULT_CUA_SNAPSHOT_KEEP_LAST_K = 3
 
 _DELIVERY_MODES = ("background", "foreground")
+
+# Replaces agent-core's one-line card description. The parent's task-tool
+# prompt tells the model to skip delegation for tasks "not related to the
+# subagent descriptions", so the card has to name the kinds of tasks it takes.
+CUA_AGENT_CARD_DESCRIPTION = {
+    "cn": (
+        "专用桌面子代理，通过 cua-driver MCP 工具操作本机应用窗口：启动应用、"
+        "在原生窗口（Office、IDE、聊天客户端、系统对话框等）内点击/输入/按快捷键/滚动、"
+        "读取窗口当前内容、查看已打开的应用与窗口。凡是要在本机图形界面上执行的操作，"
+        "都应交给它，而不是自行用脚本驱动界面。"
+    ),
+    "en": (
+        "Dedicated desktop subagent that controls host application windows through "
+        "cua-driver MCP tools: launching apps, clicking / typing / pressing hotkeys / "
+        "scrolling inside native windows (Office, IDEs, chat clients, system dialogs), "
+        "reading what a window currently shows, and listing open apps and windows. "
+        "Use it for any action on this machine's GUI instead of scripting the UI yourself."
+    ),
+}
+
+
+def build_cua_agent_card(language: str = "cn") -> AgentCard:
+    """Return the ``cua_agent`` card with the task-oriented description."""
+
+    return AgentCard(
+        name="cua_agent",
+        description=CUA_AGENT_CARD_DESCRIPTION.get(language, CUA_AGENT_CARD_DESCRIPTION["cn"]),
+    )
 
 
 def resolve_cua_factory_options(sub_cfg: Any) -> dict[str, Any]:
@@ -70,7 +100,9 @@ def resolve_cua_factory_options(sub_cfg: Any) -> dict[str, Any]:
 
 
 __all__ = [
+    "CUA_AGENT_CARD_DESCRIPTION",
     "DEFAULT_CUA_AGENT_MAX_ITERATIONS",
     "DEFAULT_CUA_SNAPSHOT_KEEP_LAST_K",
+    "build_cua_agent_card",
     "resolve_cua_factory_options",
 ]
