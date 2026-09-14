@@ -99,6 +99,7 @@ from openjiuwen.harness.rails.evolution import EvolutionReviewRuntime
 from openjiuwen.harness.rails.context_engineer.context_assemble_rail import ContextAssembleRail
 from openjiuwen.harness.rails.context_engineer.context_processor_rail import ContextProcessorRail
 from openjiuwen.harness.subagents.browser_agent import build_browser_agent_config
+from openjiuwen.harness.subagents.cua_agent import build_cua_agent_config
 from openjiuwen.harness.subagents.research_agent import build_research_agent_config
 from openjiuwen.harness.subagent_runtime import (
     SUBAGENT_ACTIVITY_EVENT_TYPE,
@@ -208,6 +209,10 @@ from jiuwenswarm.agents.harness.team.a2x.a2x_registry_runtime import (
 )
 from jiuwenswarm.agents.harness.common.browser_defaults import (
     DEFAULT_BROWSER_AGENT_MAX_ITERATIONS,
+)
+from jiuwenswarm.agents.harness.common.cua_defaults import (
+    DEFAULT_CUA_AGENT_MAX_ITERATIONS,
+    resolve_cua_factory_options,
 )
 from jiuwenswarm.agents.harness.common.tools.cron.cron_runtime import CronRuntimeBridge
 from jiuwenswarm.agents.harness.code.rails.heartbeat_rail import HeartbeatRail
@@ -4486,6 +4491,27 @@ class JiuWenSwarmDeepAdapter:
             logger.info(
                 "[JiuWenSwarmDeepAdapter] browser_agent config detected but browser runtime is not enabled; "
                 "skipping browser subagent registration"
+            )
+
+        # cua_agent (desktop automation via cua-driver MCP) — 按配置启用。
+        # No runtime switch beyond the config gate: the driver daemon is
+        # machine-owned, and agent-core's CuaRuntimeRail reports it unreachable.
+        cua_agent_cfg = (
+            subagents_cfg.get("cua_agent") if isinstance(subagents_cfg, dict) else None
+        )
+        if self._is_subagent_enabled(cua_agent_cfg):
+            subagents.append(
+                build_cua_agent_config(
+                    model,
+                    workspace=workspace,
+                    sys_operation=sys_operation,
+                    language=resolved_language,
+                    max_iterations=parse_int(
+                        cua_agent_cfg.get("max_iterations"),
+                        DEFAULT_CUA_AGENT_MAX_ITERATIONS,
+                    ),
+                    **resolve_cua_factory_options(cua_agent_cfg),
+                )
             )
 
         # ── 加载自定义 agent（.jiuwenswarm/agents/*.md）──

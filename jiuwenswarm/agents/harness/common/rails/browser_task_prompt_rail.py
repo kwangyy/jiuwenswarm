@@ -25,7 +25,10 @@ class BrowserTaskPromptRail(SubagentRail):
             enable_async_subagent=enable_async_subagent,
             enable_subagent_runtime=enable_subagent_runtime,
             task_prompt_extension=self._task_prompt_extension,
-            synchronous_subagent_types={"browser_agent"},
+            # Both stay on the synchronous task_tool even when the persistent
+            # subagent runtime is on: agent-core's TaskTool owns their explicit
+            # resume handling (browser_result / cua_result payloads).
+            synchronous_subagent_types={"browser_agent", "cua_agent"},
         )
 
     def _task_prompt_extension(

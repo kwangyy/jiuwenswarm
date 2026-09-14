@@ -609,6 +609,18 @@ react:
       enabled: true
       # Browser Agent 独立轮次预算；未配置时默认 100。
       # max_iterations: 100
+    # cua_agent: 桌面自动化子代理，通过 cua-driver MCP 操作本机应用窗口；
+    # 需本机已安装并运行 cua-driver 守护进程（cua-driver autostart kick）。
+    cua_agent:
+      enabled: false
+      # max_iterations: 25
+      # 上下文中完整保留的窗口快照数量；单窗口任务可设为 1 以大幅缩减上下文。默认 3。
+      # snapshot_keep_last_k: 3
+      # 固定输入投递模式：background（不抢焦点）或 foreground（Electron/UWP 等丢弃后台输入的应用需要）。
+      # 不填则由模型自行选择并在失败后升级。
+      # delivery_mode: foreground
+      # 用户接管屏幕（检测到鼠标/键盘输入）时暂停桌面操作，空闲后自动继续；默认开启（仅 Windows 有探测能力）。
+      # pause_on_user_input: true
   # 常驻 subagent 运行时。开启后 task_tool 被 subagent_spawn/wait/list/
   # send_input/close/resume 六个工具替换（两者互斥）。默认开启。
   subagent_runtime:

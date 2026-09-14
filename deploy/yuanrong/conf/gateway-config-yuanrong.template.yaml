@@ -366,6 +366,13 @@ react:
     browser_agent:
       enabled: true
       # max_iterations: 15
+    # cua_agent: 桌面自动化子代理，需本机运行 cua-driver 守护进程
+    cua_agent:
+      enabled: false
+      # max_iterations: 25
+      # snapshot_keep_last_k: 3
+      # delivery_mode: foreground
+      # pause_on_user_input: true
   answer_chunk_size: 500
   stream_chunk_threshold: 50
   stream_character_threshold: 2000
