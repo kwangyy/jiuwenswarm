@@ -9,9 +9,9 @@ from openjiuwen.core.single_agent.schema.agent_card import AgentCard
 
 logger = logging.getLogger(__name__)
 
-# Mirrors agent-core's ``create_cua_agent`` default: a perceive-act-verify loop
+# Raised above agent-core's ``create_cua_agent`` default (25): a perceive-act-verify loop
 # re-snapshots before every element action, so tighter budgets run dry mid-task.
-DEFAULT_CUA_AGENT_MAX_ITERATIONS = 25
+DEFAULT_CUA_AGENT_MAX_ITERATIONS = 100
 
 # agent-core default: window snapshots kept in full in the sub-agent context.
 # 3 suits two-window tasks; 1 halves the context for single-window tasks.
