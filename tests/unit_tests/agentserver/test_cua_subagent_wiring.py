@@ -604,6 +604,27 @@ def test_mounted_cua_is_found_when_ctx_agent_is_the_inner_react_agent(mocker):
     assert "Desktop Capability Unavailable" not in text
 
 
+def test_cua_is_withdrawn_when_the_request_model_rejects_images(mocker, image_cache):
+    # The session adapter mounts cua_agent against the config default model,
+    # then swaps in the user's selected model. If that model cannot see the
+    # screenshots, routing desktop tasks to cua_agent drives the GUI blind
+    # while reporting success, so the parent must be told it is unavailable.
+    mocker.patch.object(SubagentRail, "init")
+    rail = BrowserTaskPromptRail(cua_agent_enabled=True)
+    deep_agent = _rail_agent("cua_agent").agent
+    deep_agent.deep_config.model = _model("vision-default", supports_images=True)
+    rail.init(deep_agent)
+    react_ctx = SimpleNamespace(agent=SimpleNamespace())
+
+    assert "Desktop Capability Routing Rules" in rail._task_prompt_extension(react_ctx, "en")
+
+    deep_agent.deep_config.model = _model("text-only-request", supports_images=False)
+    text = rail._task_prompt_extension(react_ctx, "en")
+
+    assert "## Desktop Capability Unavailable" in text
+    assert "Desktop Capability Routing Rules" not in text
+
+
 def test_no_unavailable_notice_when_cua_is_mounted_or_not_enabled():
     mounted = BrowserTaskPromptRail(cua_agent_enabled=True)._task_prompt_extension(
         _rail_agent("cua_agent"), "en"
