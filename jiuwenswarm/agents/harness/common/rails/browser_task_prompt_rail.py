@@ -29,6 +29,7 @@ class BrowserTaskPromptRail(SubagentRail):
         # Enabled in config but absent from the mounted subagents means the
         # adapter skipped it because the model rejects image input.
         self._cua_agent_enabled = cua_agent_enabled
+        self._deep_agent: object | None = None
         super().__init__(
             enable_async_subagent=enable_async_subagent,
             enable_subagent_runtime=enable_subagent_runtime,
@@ -39,12 +40,19 @@ class BrowserTaskPromptRail(SubagentRail):
             synchronous_subagent_types={"browser_agent", "cua_agent"},
         )
 
+    def init(self, agent) -> None:
+        # Model-call callbacks carry the inner ReActAgent as ``ctx.agent``; only
+        # the DeepAgent handed to ``init`` exposes ``deep_config.subagents``.
+        self._deep_agent = agent
+        super().init(agent)
+
     def _task_prompt_extension(
         self,
         ctx: AgentCallbackContext,
         language: str,
     ) -> str | None:
-        mounted = self._mounted_subagent_names(ctx.agent)
+        agent = self._deep_agent if self._deep_agent is not None else ctx.agent
+        mounted = self._mounted_subagent_names(agent)
         has_browser = "browser_agent" in mounted
         has_cua = "cua_agent" in mounted
         sections: list[str] = []
