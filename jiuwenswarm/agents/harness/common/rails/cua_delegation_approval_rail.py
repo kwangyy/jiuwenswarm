@@ -18,7 +18,7 @@ from typing import Any, Optional
 from openjiuwen.core.foundation.llm.schema.tool_call import ToolCall
 from openjiuwen.core.single_agent.interrupt.response import InterruptRequest
 from openjiuwen.core.single_agent.rail.base import AgentCallbackContext
-from openjiuwen.harness.rails.interrupt.confirm_rail import ConfirmInterruptRail
+from openjiuwen.harness.rails.interrupt.confirm_rail import ConfirmInterruptRail, ConfirmPayload
 from openjiuwen.harness.subagents.cua_agent import CUA_PERMISSION_RULES
 from openjiuwen.harness.tools.cua.cua_capabilities import (
     DEFAULT_CUA_AGENT_CAPABILITY_NAMES,
@@ -128,15 +128,22 @@ class CuaDelegationApprovalRail(ConfirmInterruptRail):
         if user_input is None:
             if self._is_auto_confirmed(auto_confirm_config, CUA_DELEGATION_AUTO_CONFIRM_KEY):
                 return self.approve()
-            return self.interrupt(
-                InterruptRequest(
-                    message=self._build_message(tool_args.get("task_description")),
-                    payload_schema=self.request.payload_schema,
-                    auto_confirm_key=CUA_DELEGATION_AUTO_CONFIRM_KEY,
-                    ui_options=_OPTIONS_EN if self._language == "en" else _OPTIONS_CN,
-                )
-            )
+            return self._ask(tool_args)
+        if not _is_confirm_payload(user_input):
+            # The base rail would re-ask with its generic copy, which renders as
+            # a task_tool permission card; full duplex can resume with plain text.
+            return self._ask(tool_args)
         return await super().resolve_interrupt(ctx, tool_call, user_input, auto_confirm_config)
+
+    def _ask(self, tool_args: dict[str, Any]):
+        return self.interrupt(
+            InterruptRequest(
+                message=self._build_message(tool_args.get("task_description")),
+                payload_schema=self.request.payload_schema,
+                auto_confirm_key=CUA_DELEGATION_AUTO_CONFIRM_KEY,
+                ui_options=_OPTIONS_EN if self._language == "en" else _OPTIONS_CN,
+            )
+        )
 
     def _build_message(self, task_description: Any) -> str:
         task = str(task_description or "").strip()
@@ -149,6 +156,18 @@ class CuaDelegationApprovalRail(ConfirmInterruptRail):
             actions = "mouse and keyboard input" if self._language == "en" else "鼠标键盘操作"
         template = _MESSAGE_EN if self._language == "en" else _MESSAGE_CN
         return template.format(actions=actions, task=task)
+
+
+def _is_confirm_payload(user_input: Any) -> bool:
+    if isinstance(user_input, ConfirmPayload):
+        return True
+    if not isinstance(user_input, dict):
+        return False
+    try:
+        ConfirmPayload.model_validate(user_input)
+    except ValueError:
+        return False
+    return True
 
 
 def _parse_tool_args(tool_call: Optional[ToolCall]) -> dict[str, Any]:

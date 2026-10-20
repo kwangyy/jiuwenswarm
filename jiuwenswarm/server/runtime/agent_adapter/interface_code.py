@@ -696,6 +696,22 @@ class JiuwenSwarmCodeAdapter(JiuWenSwarmDeepAdapter):
             raw = "cn"
         return resolve_language(raw)
 
+    def _build_cua_delegation_approval_rail(self) -> Any | None:
+        """Render the cua approval card in the user's language, not the English prompt language."""
+        if self._is_cron_execution:
+            return None
+        try:
+            from jiuwenswarm.agents.harness.common.rails.cua_delegation_approval_rail import (
+                CuaDelegationApprovalRail,
+            )
+
+            return CuaDelegationApprovalRail(language=self._resolve_output_language())
+        except Exception as exc:
+            logger.warning(
+                "[%s] CuaDelegationApprovalRail create failed: %s", type(self).__name__, exc
+            )
+            return None
+
     def _session_instance_extra_create_kwargs(self) -> dict[str, Any]:
         """Propagate an explicit Spec through lazy root and session builds."""
         if self._session_instance_spec is not None:

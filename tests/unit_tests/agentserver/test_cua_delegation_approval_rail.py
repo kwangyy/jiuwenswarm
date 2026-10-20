@@ -104,6 +104,28 @@ async def test_resume_runs_on_approve_and_skips_on_reject():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("user_input", ["打开笔记本，清理里边的文字。", {"unexpected": 1}, ["approve"]])
+async def test_unreadable_resume_asks_again_with_the_cua_card(user_input):
+    # A full-duplex utterance can reach the pending approval as plain text. The
+    # base rail would re-ask with its generic "Please approve or reject?" copy,
+    # which renders as a task_tool permission card without the task and with an
+    # "always allow" a confirm rail cannot honour.
+    rail = CuaDelegationApprovalRail(language="en")
+    call = _task_call("cua_agent", "Open Notepad and clear it")
+
+    decision = await rail.resolve_interrupt(SimpleNamespace(), call, user_input, {})
+
+    assert isinstance(decision, InterruptResult)
+    assert "Open Notepad and clear it" in decision.request.message
+    assert decision.request.auto_confirm_key == CUA_DELEGATION_AUTO_CONFIRM_KEY
+    assert [option["value"] for option in decision.request.ui_options] == [
+        "allow_once",
+        "session_allow",
+        "reject",
+    ]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("language", ["cn", "en"])
 async def test_card_renders_as_confirm_with_its_own_options(language):
     # task_tool is not a known confirm tool, so without recognising this copy
@@ -134,6 +156,21 @@ def test_gated_actions_follow_agent_core_rules():
     # the enabled capabilities, so it cannot drift from what cua may do.
     # kill_app is denied by agent-core but off by default, so it is not listed.
     assert GATED_CUA_TOOLS == ("launch_app", "type_text")
+
+
+@pytest.mark.parametrize("preferred, lead", [("zh", "**cua_agent 将操作你的桌面"), ("en", "**cua_agent will control")])
+def test_code_mode_card_follows_the_user_language(monkeypatch, preferred, lead):
+    # Code mode keeps prompts in English; the card is read by the user, so a
+    # Chinese user must not get an English card under a Chinese header.
+    from jiuwenswarm.server.runtime.agent_adapter.interface_code import JiuwenSwarmCodeAdapter
+
+    adapter = JiuwenSwarmCodeAdapter()
+    adapter._is_cron_execution = False
+    monkeypatch.setattr(adapter, "_active_code_config", lambda: {"preferred_language": preferred})
+
+    rail = adapter._build_cua_delegation_approval_rail()
+
+    assert rail._build_message("task").startswith(lead)
 
 
 def test_cron_runs_do_not_mount_the_gate():
