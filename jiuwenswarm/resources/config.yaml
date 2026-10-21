@@ -669,6 +669,7 @@ react:
     # cua_agent: 桌面自动化子代理，通过截图和真实鼠标键盘输入操作本机应用窗口；
     # 需安装 cua 可选依赖（pip install "workswarm[cua]" 或 uv sync --extra cua），并使用支持图片输入的模型。
     # 运行时会真实移动鼠标、向前台窗口输入，执行期间请勿操作电脑。
+    # 仅对单 Agent 与代码模式生效；团队（集群）模式不支持 cua_agent，此开关对团队成员无效。
     cua_agent:
       enabled: false
       # max_iterations: 100

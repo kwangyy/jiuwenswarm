@@ -68,9 +68,9 @@ react:
       pause_on_user_input: false # hold actions while you use mouse/keyboard, resume when idle
 ```
 
-The same `enabled` flag applies to single-agent (deep) mode, code mode, and team (swarm)
-members (provider `swarm.cua_agent`); it does not depend on the mode. Restart JiuwenSwarm
-after changing it.
+The same `enabled` flag applies to single-agent (deep) mode and code mode. Team (swarm)
+mode does not support `cua_agent`: team members never mount it, even when `enabled: true`.
+Restart JiuwenSwarm after changing it.
 
 ## 4. Usage
 
