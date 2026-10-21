@@ -38,6 +38,9 @@ from jiuwenswarm.agents.harness.common.cua_defaults import (
 from jiuwenswarm.agents.harness.common.prompt.cua_task_prompt import (
     build_cua_task_prompt,
 )
+from jiuwenswarm.agents.harness.common.rails.subagent_tool_activity_rail import (
+    SubagentToolActivityRail,
+)
 from jiuwenswarm.agents.harness.common.rails.browser_task_prompt_rail import (
     BrowserTaskPromptRail,
 )
@@ -93,6 +96,8 @@ def test_single_agent_mounts_cua_agent_only_when_explicitly_enabled(
     # Shares the parent's filesystem boundary like every other built-in spec.
     assert spec.sys_operation is adapter._sys_operation
     assert spec.workspace == str(tmp_path)
+    # Without it the subagent panel shows only thinking (issue #8637).
+    assert any(isinstance(rail, SubagentToolActivityRail) for rail in spec.rails)
 
 
 def test_single_agent_skips_cua_agent_when_absent_or_disabled(monkeypatch, tmp_path):
@@ -146,6 +151,8 @@ def test_code_mode_mounts_cua_agent_when_enabled(monkeypatch, tmp_path):
     assert spec.sys_operation is adapter._sys_operation
     # Code mode never lets sub-agents create their own workspace.
     assert spec.factory_kwargs["auto_create_workspace"] is False
+    # Without it the subagent panel shows only thinking (issue #8637).
+    assert any(isinstance(rail, SubagentToolActivityRail) for rail in spec.rails)
 
 
 def test_code_mode_skips_cua_agent_when_absent(monkeypatch, tmp_path):
