@@ -965,8 +965,8 @@ def build_member_subagent_specs(
     Code modes additionally include explore / plan. Every sub-agent is gated by
     ``react.subagents.<name>.enabled``; status-line setup, explore and plan
     default to on (only an explicit ``false`` drops them), while code / browser
-    require an explicit ``true``. The cua (desktop) sub-agent is mode-agnostic
-    and likewise requires an explicit ``true``.
+    require an explicit ``true``. The cua (desktop) sub-agent is never mounted
+    on team members, even when enabled.
 
     Args:
         config: The resolved ``config.yaml`` mapping.
@@ -997,14 +997,8 @@ def build_member_subagent_specs(
             )
         )
 
-    # cua_agent drives the host desktop, which is not a code-profile concern,
-    # so it is offered in every mode when the operator opts in explicitly.
-    if isinstance(subagents_cfg, dict) and _is_subagent_enabled(
-        subagents_cfg.get("cua_agent")
-    ):
-        specs.append(
-            _code_subagent_spec("cua_agent", registry.SWARM_CUA_AGENT, react, language)
-        )
+    # cua_agent is not offered to team members: it drives the host desktop and
+    # its approval card cannot reach the user from a headless teammate.
 
     if not _is_code_mode(mode):
         return specs

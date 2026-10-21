@@ -11,7 +11,6 @@ because agent-core's TaskTool owns its explicit resume / ``cua_result`` handling
 
 from __future__ import annotations
 
-import inspect
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -27,7 +26,6 @@ from openjiuwen.harness.schema.deep_agent_spec import SubAgentConfig
 from openjiuwen.harness.subagents.cua_agent import (
     CUA_AGENT_FACTORY_NAME,
     DEFAULT_CUA_AGENT_DESCRIPTION,
-    create_cua_agent,
 )
 
 from jiuwenswarm.agents.harness.common.cua_defaults import (
@@ -45,10 +43,7 @@ from jiuwenswarm.agents.harness.common.rails.browser_task_prompt_rail import (
 from jiuwenswarm.agents.swarm import registry
 from jiuwenswarm.agents.swarm.config_specs import build_member_subagent_specs
 from jiuwenswarm.agents.swarm.context import SwarmBuildContext
-from jiuwenswarm.agents.swarm.providers.code_subagents import (
-    SWARM_CUA_AGENT,
-    build_swarm_cua_agent,
-)
+from jiuwenswarm.agents.swarm.providers.code_subagents import build_swarm_cua_agent
 from jiuwenswarm.agents.swarm.registry import register_swarm_providers
 from jiuwenswarm.server.runtime.agent_adapter.interface_code import (
     JiuwenSwarmCodeAdapter,
@@ -162,38 +157,16 @@ def test_code_mode_skips_cua_agent_when_absent(monkeypatch, tmp_path):
 # ── swarm / team path ────────────────────────────────────────────────────
 
 
-def test_team_specs_mount_cua_agent_in_every_mode_when_enabled():
-    config = {
-        "react": {"subagents": {"cua_agent": {"enabled": True, "max_iterations": 9}}}
-    }
+def test_team_specs_never_mount_cua_agent_even_when_enabled():
+    # Cluster mode does not support cua: a teammate is headless, so the cua
+    # delegation approval card could never reach the user and the desktop
+    # would be driven without consent.
+    config = {"react": {"subagents": {"cua_agent": {"enabled": True}}}}
 
     for mode in ("code.team", "team"):
-        specs = build_member_subagent_specs(config, mode, "leader")
-        cua = [s for s in specs if s.factory_name == registry.SWARM_CUA_AGENT]
-        assert len(cua) == 1, mode
-        assert cua[0].agent_card.name == "cua_agent"
-        assert cua[0].factory_kwargs["max_iterations"] == 9
-
-
-def test_team_specs_skip_cua_agent_when_absent_or_disabled():
-    for config in (
-        {},
-        {"react": {"subagents": {"cua_agent": {"enabled": False}}}},
-        {"react": {"subagents": {"cua_agent": {"max_iterations": 9}}}},
-    ):
-        specs = build_member_subagent_specs(config, "code.team", "leader")
-        assert all(s.factory_name != registry.SWARM_CUA_AGENT for s in specs)
-
-
-def test_team_specs_cua_default_iteration_budget():
-    specs = build_member_subagent_specs(
-        {"react": {"subagents": {"cua_agent": {"enabled": True}}}},
-        "code.team",
-        "leader",
-    )
-    cua = next(s for s in specs if s.factory_name == SWARM_CUA_AGENT)
-
-    assert cua.factory_kwargs["max_iterations"] == DEFAULT_CUA_AGENT_MAX_ITERATIONS
+        for role in ("leader", "teammate"):
+            specs = build_member_subagent_specs(config, mode, role)
+            assert all(s.factory_name != registry.SWARM_CUA_AGENT for s in specs), (mode, role)
 
 
 def test_swarm_cua_provider_skips_without_parent_model():
@@ -244,54 +217,6 @@ def test_pause_on_user_input_knob_maps_and_validates():
     assert resolve_cua_factory_options({"pause_on_user_input": "maybe"}) == {}
 
 
-def test_team_specs_carry_pause_on_user_input_to_the_provider():
-    register_swarm_providers()
-    specs = build_member_subagent_specs(
-        {
-            "react": {
-                "subagents": {
-                    "cua_agent": {"enabled": True, "pause_on_user_input": False}
-                }
-            }
-        },
-        "code.team",
-        "leader",
-    )
-    cua = next(s for s in specs if s.factory_name == SWARM_CUA_AGENT)
-    assert cua.factory_kwargs["pause_on_user_input"] is False
-
-    ctx = SwarmBuildContext(
-        mode="code.team", role="leader", member_name="leader", session_id="s", config={}
-    )
-    ctx.extras["_parent_model"] = MagicMock()
-    spec = build_swarm_cua_agent(dict(cua.factory_kwargs), ctx)
-    assert spec.factory_kwargs["cua_pause_on_user_input"] is False
-
-
-def test_team_path_pause_default_matches_the_single_agent_path():
-    # With pause_on_user_input unset, the deep/code paths pass nothing and get
-    # agent-core's default; the team provider must land on the same value, or
-    # one config.yaml behaves differently per mode.
-    register_swarm_providers()
-    specs = build_member_subagent_specs(
-        {"react": {"subagents": {"cua_agent": {"enabled": True}}}},
-        "code.team",
-        "leader",
-    )
-    cua = next(s for s in specs if s.factory_name == SWARM_CUA_AGENT)
-    assert "pause_on_user_input" not in cua.factory_kwargs
-
-    ctx = SwarmBuildContext(
-        mode="code.team", role="leader", member_name="leader", session_id="s", config={}
-    )
-    ctx.extras["_parent_model"] = MagicMock()
-    spec = build_swarm_cua_agent(dict(cua.factory_kwargs), ctx)
-    agent_core_default = (
-        inspect.signature(create_cua_agent).parameters["cua_pause_on_user_input"].default
-    )
-    assert spec.factory_kwargs["cua_pause_on_user_input"] is agent_core_default is False
-
-
 def test_invalid_cua_knobs_are_dropped_instead_of_aborting_the_build():
     # agent-core raises ValueError on these; the adapter must not pass them on.
     assert resolve_cua_factory_options({"snapshot_keep_last_k": 0}) == {}
@@ -336,39 +261,6 @@ def test_single_agent_cua_knob_defaults(monkeypatch, tmp_path):
 
     kwargs = _cua_spec(subagents).factory_kwargs
     assert kwargs["cua_snapshot_keep_last_k"] == DEFAULT_CUA_SNAPSHOT_KEEP_LAST_K
-
-
-def test_team_specs_carry_cua_knobs_to_the_provider():
-    register_swarm_providers()
-    specs = build_member_subagent_specs(
-        {
-            "react": {
-                "subagents": {
-                    "cua_agent": {
-                        "enabled": True,
-                        "snapshot_keep_last_k": 1,
-                        "delivery_mode": "foreground",
-                    }
-                }
-            }
-        },
-        "code.team",
-        "leader",
-    )
-    cua = next(s for s in specs if s.factory_name == SWARM_CUA_AGENT)
-    assert cua.factory_kwargs["snapshot_keep_last_k"] == 1
-    assert "delivery_mode" not in cua.factory_kwargs
-
-    ctx = SwarmBuildContext(
-        mode="code.team", role="leader", member_name="leader", session_id="s", config={}
-    )
-    ctx.extras["_parent_model"] = MagicMock()
-    spec = build_swarm_cua_agent(dict(cua.factory_kwargs), ctx)
-    assert spec.factory_kwargs["cua_snapshot_keep_last_k"] == 1
-    assert "cua_delivery_mode" not in spec.factory_kwargs
-
-
-# ── synchronous delegation ───────────────────────────────────────────────
 
 
 def test_cua_agent_stays_synchronous_under_subagent_runtime():
