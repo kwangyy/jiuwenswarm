@@ -25,6 +25,8 @@ from openjiuwen.core.session.stream.base import OutputSchema
 from openjiuwen.core.single_agent.ability_manager import resolve_tool_result_text
 from openjiuwen.core.single_agent.rail.base import AgentCallbackContext, AgentRail, ToolCallInputs
 
+from jiuwenswarm.agents.harness.common.rails.stream_event_rail import _infer_tool_result_error
+
 logger = logging.getLogger(__name__)
 
 # Fallback summary length when the model-facing text is unavailable; the
@@ -84,6 +86,10 @@ class SubagentToolActivityRail(AgentRail):
             success = False
         else:
             success = getattr(result, "success", None)
+            if not isinstance(success, bool):
+                # Plain dict / text results: same inference as the root's panel rows.
+                error = _infer_tool_result_error(result)
+                success = None if error is None else not error
         try:
             rendered = resolve_tool_result_text(ctx.inputs, ctx.exception)
             if rendered is None:

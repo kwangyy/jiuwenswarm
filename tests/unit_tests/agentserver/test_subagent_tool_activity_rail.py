@@ -86,6 +86,25 @@ async def test_failed_tool_is_shown_as_failed_with_the_model_facing_error() -> N
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("tool_result", [{"success": False}, {"status": "error"}, "[ERROR] page not found"])
+async def test_plain_failure_result_is_not_shown_as_success(tool_result) -> None:
+    # Tools that return a dict or text instead of a ToolOutput still report
+    # failure; the panel must not mark them succeeded (same rule as the root rail).
+    session = _StreamSession()
+    inputs = ToolCallInputs(
+        tool_call=SimpleNamespace(name="navigate", id="tc-4"),
+        tool_name="navigate",
+        tool_args={},
+        tool_result=tool_result,
+    )
+
+    await SubagentToolActivityRail().after_tool_call(_ctx(session, inputs))
+
+    (result,) = _project(session.events)
+    assert result.ok is False
+
+
+@pytest.mark.asyncio
 async def test_stream_failure_never_breaks_the_subagent_tool_call() -> None:
     inputs = ToolCallInputs(tool_call=SimpleNamespace(name="click", id="tc-3"), tool_name="click", tool_args={})
     rail = SubagentToolActivityRail()
