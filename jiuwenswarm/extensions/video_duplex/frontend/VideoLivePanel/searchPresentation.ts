@@ -56,9 +56,11 @@ export function mergeSearchProgressJob(
 
   const existingIndex = jobs.findIndex((job) => job.id === jobId);
   const existing = existingIndex >= 0 ? jobs[existingIndex] : undefined;
-  const incoming = payload.progress_history?.length
+  // Subagent frames belong to the 子智能体 panel; as rows here they would pile up,
+  // one per event, and never complete.
+  const incoming = (payload.progress_history?.length
     ? payload.progress_history
-    : payload.progress ? [payload.progress] : [];
+    : payload.progress ? [payload.progress] : []).filter((entry) => entry.stage !== 'subagent');
   const lastSequence = Math.max(0, ...(existing?.progress || []).map((entry) => entry.sequence));
   const incomingSequence = Math.max(0, ...incoming.map((entry) => entry.sequence));
   const keepStatus = existing && (

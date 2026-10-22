@@ -69,3 +69,16 @@ test('queued execution is labelled explicitly and late snapshots do not undo com
   jobs = mergeSearchProgressJob(jobs, payload('one', 'request', 'running', 2));
   assert.equal(jobs[0].status, 'completed');
 });
+
+test('subagent frames stay out of the progress list', () => {
+  // They are shown in the 子智能体 panel; here each frame would add a row that never completes.
+  const history = [
+    { stage: 'search', title: 'search step', status: 'running', sequence: 1 },
+    { stage: 'subagent', title: '子智能体：cua_agent', status: 'running', sequence: 2 },
+    { stage: 'subagent', title: '子智能体：cua_agent', status: 'running', sequence: 3 },
+    { stage: 'answer', title: 'answer', status: 'completed', sequence: 4 },
+  ];
+  const [job] = mergeSearchProgressJob([], { job_id: 'voice', query: 'q', status: 'completed', progress_history: history });
+  assert.deepEqual(job.progress.map((entry) => entry.stage), ['search', 'answer']);
+  assert.equal(job.status, 'completed');
+});
