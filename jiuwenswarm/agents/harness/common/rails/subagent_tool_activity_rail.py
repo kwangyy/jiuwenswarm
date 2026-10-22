@@ -82,15 +82,15 @@ class SubagentToolActivityRail(AgentRail):
             return
         tool_call = ctx.inputs.tool_call
         result = ctx.inputs.tool_result
-        if ctx.exception is not None:
-            success = False
-        else:
-            success = getattr(result, "success", None)
-            if not isinstance(success, bool):
-                # Plain dict / text results: same inference as the root's panel rows.
-                error = _infer_tool_result_error(result)
-                success = None if error is None else not error
         try:
+            if ctx.exception is not None:
+                success = False
+            else:
+                success = getattr(result, "success", None)
+                if not isinstance(success, bool):
+                    # Plain dict / text results: same inference as the root's panel rows.
+                    error = _infer_tool_result_error(result)
+                    success = None if error is None else not error
             rendered = resolve_tool_result_text(ctx.inputs, ctx.exception)
             if rendered is None:
                 rendered = str(result if result is not None else ctx.exception or "")

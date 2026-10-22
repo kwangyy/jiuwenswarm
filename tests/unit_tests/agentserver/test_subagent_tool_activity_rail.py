@@ -117,3 +117,23 @@ def test_runs_after_rails_that_reject_or_rewrite_the_tool_call() -> None:
     # Permission rails must be able to reject a call before the panel shows it,
     # and result-rewriting rails must finish before the result is shown.
     assert SubagentToolActivityRail.priority < AgentRail.priority
+
+
+@pytest.mark.asyncio
+async def test_result_inference_failure_never_breaks_the_subagent_tool_call(monkeypatch) -> None:
+    # Working out success for the panel is display-only; if it throws on an
+    # unexpected result shape, the tool call must still complete.
+    from jiuwenswarm.agents.harness.common.rails import subagent_tool_activity_rail as rail_module
+
+    def _boom(_result):
+        raise ValueError("unexpected result shape")
+
+    monkeypatch.setattr(rail_module, "_infer_tool_result_error", _boom)
+    inputs = ToolCallInputs(
+        tool_call=SimpleNamespace(name="navigate", id="tc-5"),
+        tool_name="navigate",
+        tool_args={},
+        tool_result={"weird": object()},
+    )
+
+    await SubagentToolActivityRail().after_tool_call(_ctx(_StreamSession(), inputs))

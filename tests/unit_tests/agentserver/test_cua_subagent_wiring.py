@@ -672,3 +672,24 @@ def test_cua_factory_keeps_caller_rails_in_both_builds(monkeypatch, frozen):
     rails = captured["rails"]
     assert rails[0] is caller_rail
     assert any(isinstance(rail, CuaExtensionRail) for rail in rails) is frozen
+
+
+def test_panel_rail_is_added_to_the_cua_default_rails_not_replacing_them(monkeypatch, tmp_path):
+    # The adapter puts the panel rail on the spec; agent-core's factory must
+    # append its own desktop rails after it. If it ever switched to replacing
+    # them, the subagent would lose its desktop runtime and context window.
+    from openjiuwen.harness.subagents import cua_agent as core_cua_agent
+    from openjiuwen.harness.tools.cua.rails import CuaRuntimeRail
+
+    adapter = _deep_adapter(monkeypatch, tmp_path)
+    subagents, _ = adapter._build_configured_subagents(
+        MagicMock(), {"subagents": {"cua_agent": {"enabled": True}}}, {}
+    )
+    captured = {}
+    monkeypatch.setattr(core_cua_agent, "create_deep_agent", lambda **kwargs: captured.update(kwargs))
+
+    create_cua_agent(MagicMock(), rails=list(_cua_spec(subagents).rails))
+
+    rails = captured["rails"]
+    assert isinstance(rails[0], SubagentToolActivityRail)
+    assert any(isinstance(rail, CuaRuntimeRail) for rail in rails)
