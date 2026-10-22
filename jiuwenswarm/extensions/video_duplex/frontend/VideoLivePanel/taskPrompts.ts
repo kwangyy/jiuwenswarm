@@ -45,7 +45,21 @@ export function taskCancellationNotice(jobId: string): string {
   return `Task stop confirmed: ${JSON.stringify({ job_id: jobId, status: 'cancelled', stopped: true })}. This task was cancelled, not successfully completed. Other tasks are unaffected.`;
 }
 
-const APPROVAL_SOURCES = new Set(['permission_interrupt', 'confirm_interrupt']);
+export const APPROVAL_SOURCES = new Set(['permission_interrupt', 'confirm_interrupt']);
+
+// Standing instructions while approval cards are open: a one-off notice is
+// forgotten by the next user turn, and a spoken "允许" must not read as consent.
+export function pendingApprovalInstructions(headers: string[]): string {
+  if (!headers.length) return '';
+  return `[Pending approval cards] These Background Agent approval cards are waiting for the user to click on screen: ${JSON.stringify(headers)}. Voice cannot approve or reject them. If the user says 允许, 同意, 可以, 确认, allow or 拒绝 by voice, say that voice cannot approve it and ask them to click 允许 or 拒绝 on the card. Never say a pending card was allowed or approved, or that its task is starting, until a later result or query shows the task resumed.`;
+}
+
+// Placed directly before every reply to the user's speech while a card is open. The
+// realtime model hears the audio itself (its transcript can differ), and it read a spoken
+// "允许" as a click even with the pending-card instructions in place.
+export function pendingCardTurnNotice(headers: string[]): string {
+  return `[Approval card status] ${JSON.stringify(headers)} is still waiting for the user to click it on screen. The user has NOT clicked it, and voice cannot approve or reject it. If the user's latest speech answers the card in any wording (allow, agree, yes, ok, reject...), reply only that voice cannot answer the card and ask them to click 允许 or 拒绝 on the on-screen card. Otherwise answer the user's latest request normally. Never say the card was allowed, approved, rejected or clicked.`;
+}
 
 export function taskQuestionNotice(question: unknown): string {
   const source = (question as { interaction?: { source?: unknown } } | null)?.interaction?.source;

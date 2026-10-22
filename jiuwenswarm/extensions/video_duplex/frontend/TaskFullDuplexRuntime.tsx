@@ -300,6 +300,8 @@ export function TaskFullDuplexRuntime({
         queueVersion: payload.queue_version ?? previousTask?.queueVersion,
       });
       if (payload.replay) return;
+      if (payload.interaction && runtimeSessionIdRef.current === targetSessionId)
+        panelRef.current?.deliverQuestion(payload);
       const processed =
         processedCoreProgressRef.current.get(jobId) || new Set<number>();
       processedCoreProgressRef.current.set(jobId, processed);
