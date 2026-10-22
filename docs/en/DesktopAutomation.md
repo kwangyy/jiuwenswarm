@@ -119,6 +119,7 @@ force-kill applications.
 | `react.subagents.cua_agent.max_iterations` | int | `100` | Subagent iteration cap. The capture-act-verify loop uses many iterations; avoid setting it too low. |
 | `react.subagents.cua_agent.snapshot_keep_last_k` | int ≥ 1 | `3` | Number of recent screenshots kept in full in context. 3 suits tasks that move between two windows; `1` cuts context considerably for single-window tasks. Invalid values are ignored with a warning and the default applies. |
 | `react.subagents.cua_agent.pause_on_user_input` | boolean | `false` | Hold desktop actions while you use the mouse/keyboard and resume after about 5 s idle. If you keep using the machine for about 60 s, the subagent ends the task and reports what it completed. Detection works on Windows and Linux X11 only; elsewhere the option has no effect. |
+| `react.subagents.cua_agent.require_approval` | boolean | `true` | Show a confirmation card each time the main agent hands a task to `cua_agent` (also in full-access mode). Choosing "Always allow" on the card writes `false`, so no session asks again; set it back to `true` to be asked again. |
 
 Environment variable:
 
