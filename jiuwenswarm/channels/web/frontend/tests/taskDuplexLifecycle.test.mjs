@@ -115,7 +115,7 @@ let timers;
 const previousGlobals = new Map();
 
 beforeEach(async () => {
-  dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/' });
+  dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/', pretendToBeVisual: true });
   dom.window.HTMLCanvasElement.prototype.getContext = () => null;
   for (const [name, value] of Object.entries({
     window: dom.window,
@@ -645,14 +645,29 @@ test('the undragged orb stays above the input frame and any pending card docked 
   document.querySelector('.chat-input-frame').getBoundingClientRect = rect(618, 150);
   await start();
   const orb = () => document.querySelector('[data-testid="chat-panel-duplex-controls"]');
+  // Layout changes are measured on the next animation frame.
+  const nextFrame = () => act(() => new Promise((resolve) => dom.window.requestAnimationFrame(() => resolve())));
   // JSDOM viewport is 768px tall: 768 - card top 560 + 12px gap.
   assert.equal(orb().style.bottom, '220px');
   // An expanded card pushes the orb up with it.
   card.getBoundingClientRect = rect(480, 129);
   await act(async () => card.append(document.createElement('p')));
+  await nextFrame();
   assert.equal(orb().style.bottom, '300px');
+  // A streamed reply mutates the page per commit; it must not force a layout per mutation.
+  let measured = 0;
+  card.getBoundingClientRect = () => { measured += 1; return rect(480, 129)(); };
+  await act(async () => {
+    for (let i = 0; i < 20; i += 1) {
+      card.append(document.createElement('span'));
+      await Promise.resolve(); // separate commits, as while a reply streams
+    }
+  });
+  await nextFrame();
+  assert.equal(measured, 1);
   // Once the card is resolved the orb settles above the input frame.
   await renderComposer(false);
+  await nextFrame();
   assert.equal(orb().style.bottom, '162px');
 });
 

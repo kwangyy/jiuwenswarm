@@ -211,7 +211,13 @@ export function TaskFullDuplexControls() {
   useEffect(() => {
     if (!orbMounted || position) return;
     let observed: Element[] = [];
-    const resizeObserver = typeof window.ResizeObserver === 'undefined' ? null : new window.ResizeObserver(() => update());
+    // Page mutations arrive per React commit while replies stream; measure (a forced
+    // layout) at most once per frame.
+    let frame = 0;
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(() => { frame = 0; update(); });
+    };
+    const resizeObserver = typeof window.ResizeObserver === 'undefined' ? null : new window.ResizeObserver(schedule);
     const update = () => {
       const docked = Array.from(document.querySelectorAll(COMPOSER_DOCK_SELECTOR));
       if (resizeObserver && (docked.length !== observed.length || docked.some((el, i) => el !== observed[i]))) {
@@ -232,13 +238,14 @@ export function TaskFullDuplexControls() {
       setDockBottom(Math.max(8, Math.min(window.innerHeight - top + COMPOSER_DOCK_GAP, window.innerHeight - height - 8)));
     };
     update();
-    const mutationObserver = new window.MutationObserver(update);
+    const mutationObserver = new window.MutationObserver(schedule);
     mutationObserver.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener('resize', update);
+    window.addEventListener('resize', schedule);
     return () => {
+      if (frame) window.cancelAnimationFrame(frame);
       mutationObserver.disconnect();
       resizeObserver?.disconnect();
-      window.removeEventListener('resize', update);
+      window.removeEventListener('resize', schedule);
     };
   }, [orbMounted, position]);
 
