@@ -80,6 +80,10 @@ enabled, the main agent:
 - delegates desktop work through the synchronous `task_tool` with `subagent_type`
   `"cua_agent"`, keeping your full objective in `task_description` rather than reducing it
   to steps;
+- shows an "操作确认: cua_agent" card before each delegation, with the task and a note that
+  the subagent may start apps (`launch_app`) and type text (`type_text`). The options are
+  Allow once, Session allow, Always allow, and Reject; Always allow sets
+  `require_approval` to `false`, so no session asks again (see section 5);
 - asks you to confirm irreversible actions (sending messages, deleting files, submitting
   forms, payments) before they happen;
 - does not script the GUI itself via Bash, PowerShell, pyautogui, AutoHotkey, etc.; if
@@ -138,6 +142,9 @@ Environment variable:
 - The subagent can start local programs with `launch_app` and type into any focused window
   with `type_text`. Enable it only for trusted tasks and models.
 - Check carefully when the main agent asks you to confirm an irreversible action.
+- The delegation card is the last check before the subagent takes over your desktop. After
+  Always allow, no session asks again; set `react.subagents.cua_agent.require_approval` back
+  to `true` to restore it.
 
 ## 7. Troubleshooting
 
