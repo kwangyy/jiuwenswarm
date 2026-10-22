@@ -120,6 +120,18 @@ test('pending information questions are announced once without completing their 
   assert.deepEqual(dispatchedToolResults, []);
 });
 
+test('pending approval cards ask the user to click instead of answering by voice', () => {
+  // Voice must never approve cards, so it must not invite a spoken "允许" either.
+  const { session, sent } = createSession();
+  session.enqueueQuestion('cua', { id: 'card-a', request_id: 'core-approval', state: 'pending',
+    source: 'confirm_interrupt', questions: [{ header: '操作确认: cua_agent', question: '打开计算器' }] });
+  const text = sent[0].item.content[0].text;
+  assert.match(text, /操作确认: cua_agent/);
+  assert.match(text, /click/);
+  assert.match(text, /Do not call jiuwen_task_answer/);
+  assert.doesNotMatch(text, /then call jiuwen_task_answer/);
+});
+
 test('delegation retains valid scheduling arguments and dispatches only once', () => {
   const errors = [];
   const { session, functionCalls } = createSession(null, { onError: (message) => errors.push(message) });
