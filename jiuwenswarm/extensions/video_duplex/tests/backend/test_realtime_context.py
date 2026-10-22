@@ -188,3 +188,20 @@ async def test_shared_restorer_preserves_history_and_refreshes_only_task_facts(m
     manager.authorized_scope.return_value = ("bob", "task-duplex:chat-a")
     with pytest.raises(ValueError, match="unavailable"):
         await restorer.instructions(None, "task-duplex:chat-a", envelope["token"])
+
+
+def test_reconnect_snapshot_marks_open_approval_cards_click_only():
+    # A reconnected voice model is told the same as a live task query: an open
+    # approval card needs a click and cannot be answered by voice (#8941).
+    card = {"source": "confirm_interrupt", "state": "pending", "request_id": "call-1",
+            "questions": [{"header": "操作确认: cua_agent", "question": "cua_agent 将操作你的桌面"}]}
+    question = {"source": "ask_user_interrupt", "state": "pending", "request_id": "call-2",
+                "questions": [{"question": "预算多少？"}]}
+    snapshot = context.task_snapshot({"queue_version": 1, "jobs": [
+        {"job_id": "a", "status": "waiting_user", "interaction": card},
+        {"job_id": "b", "status": "waiting_user", "interaction": question},
+    ]})
+    approval, info = snapshot["jobs"]
+    assert approval["requires_click"] is True
+    assert approval["approval_cards"][0]["header"] == "操作确认: cua_agent"
+    assert "requires_click" not in info

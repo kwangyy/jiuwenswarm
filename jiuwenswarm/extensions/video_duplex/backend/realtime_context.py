@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import uuid
 
+from jiuwenswarm.extensions.video_duplex.backend.tasks.interactions import approval_cards
 from jiuwenswarm.server.runtime.session.session_history import (
     flush_pending_writes, load_history_records, resolve_session_dir,
 )
@@ -192,6 +193,10 @@ def task_snapshot(snapshot):
         item = {key: job.get(key) for key in (
             "job_id", "revision", "status", "question", "query", "interaction", "realtime_brief", "files",
         )}
+        # Same click-only marker as live task queries, so a reconnected model is told too.
+        cards = approval_cards(job.get("interaction"))
+        if cards is not None:
+            item.update(requires_click=True, approval_cards=cards)
         size = len(json.dumps(item, ensure_ascii=False))
         if used + size > TASK_CHARS:
             continue
