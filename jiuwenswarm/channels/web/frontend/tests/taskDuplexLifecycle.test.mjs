@@ -673,6 +673,18 @@ test('an open approval card holds the mic until it is clicked', async () => {
   assert.deepEqual(harness.mic, [true, false]);
 });
 
+test('with two cards open, clicking one keeps the mic held until the last closes', async () => {
+  // Two voice tasks can each wait on a card; answering one must not reopen the mic.
+  await start();
+  const second = { ...cuaCard, request_id: 'card-b', questions: [{ ...cuaCard.questions[0], question: '另一个桌面操作' }] };
+  await showCard('conversation-a', cuaCard);
+  await showCard('conversation-a', second);
+  await clickCard('conversation-a', cuaCard);
+  assert.deepEqual(harness.mic, [true]);
+  await clickCard('conversation-a', second);
+  assert.deepEqual(harness.mic, [true, false]);
+});
+
 test('a card of any non-form source holds the mic, information forms do not', async () => {
   // Default-deny: only plain information forms are voice-answerable.
   await start();
