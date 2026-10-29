@@ -388,7 +388,9 @@ async def execute_core_agent(
                                        status="running", interaction=pending_interaction,
                                        detail="\n".join(q["question"] for q in pending_interaction["questions"])))
             continue
-        if event_type == "chat.error":
+        # AgentServer request failures arrive as a bare {"error": ...} payload
+        # without event_type; ignoring them left the task "unknown" (#5885).
+        if event_type == "chat.error" or (not event_type and payload.get("error")):
             raise RuntimeError(
                 str(
                     payload.get("error")

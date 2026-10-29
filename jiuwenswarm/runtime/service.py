@@ -2626,9 +2626,14 @@ class AgentRuntime:
             request.session_id or "default",
             self._control_request_id(request),
         )
+        from jiuwenswarm.runtime.request import resolve_request_owner_channel
+
+        # A voice task answers on ``video_tool`` but its session lives on the
+        # chat's own agent; events still route back on the request channel.
+        owner_channel = resolve_request_owner_channel(request) or "default"
         lookup = getattr(self._agent_manager, "get_agent_for_session_nowait", None)
         agent = (
-            lookup(channel_id, request.session_id or "") if callable(lookup) else None
+            lookup(owner_channel, request.session_id or "") if callable(lookup) else None
         )
         if agent is None:
             raise RuntimeError(
@@ -2693,8 +2698,12 @@ class AgentRuntime:
             request.session_id or "default",
             self._control_request_id(request),
         )
+        from jiuwenswarm.runtime.request import resolve_request_owner_channel
+
+        # Same owner-channel lookup as _deliver_control_started.
+        owner_channel = resolve_request_owner_channel(request) or "default"
         lookup = getattr(self._agent_manager, "get_agent_for_session_nowait", None)
-        agent = lookup(channel_id, request.session_id or "") if callable(lookup) else None
+        agent = lookup(owner_channel, request.session_id or "") if callable(lookup) else None
         if agent is None:
             raise RuntimeError(f"session has no active agent: {request.session_id or 'default'}")
         deliver = getattr(agent, "deliver_control_input", None)

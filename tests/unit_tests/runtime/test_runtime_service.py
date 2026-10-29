@@ -4748,6 +4748,81 @@ async def test_voice_task_is_refused_before_admission_and_the_card_stays_clickab
     assert [event.event_type for event in clicked] == ["chat.final"]
 
 
+@pytest.mark.parametrize("streaming", [False, True])
+async def test_voice_card_answer_reaches_the_chat_agent(monkeypatch, streaming) -> None:
+    """#5885: since #5487 a voice task runs on the chat's own agent, which the
+    manager holds under the chat's channel. The voice task answers its card on
+    ``video_tool``; looking the agent up under that channel found nothing, so
+    the approved cua_agent task never resumed and the voice task went unknown.
+    The answer must reach the chat's agent and its result must still route
+    back to the voice requester."""
+    monkeypatch.setattr(
+        "jiuwenswarm.server.runtime.session.session_metadata.get_session_metadata",
+        lambda *_args, **_kwargs: {"channel_id": "web"},
+    )
+    delivered: list[str] = []
+
+    class CardAgent(FakeAgent):
+        async def process_message_stream(self, request: AgentRequest):
+            yield AgentResponseChunk(
+                request_id=request.request_id,
+                channel_id=request.channel_id,
+                payload={
+                    "event_type": "chat.ask_user_question",
+                    "request_id": "call_cua",
+                    "source": "confirm_interrupt",
+                    "questions": [],
+                },
+            )
+
+        async def deliver_control_input(self, request: AgentRequest):
+            delivered.append(request.request_id)
+            yield AgentResponseChunk(
+                request_id=request.request_id,
+                channel_id=request.channel_id,
+                payload={"event_type": "chat.final", "content": "approved"},
+                is_complete=True,
+            )
+
+    class ChatChannelManager(FakeAgentManager):
+        def get_agent_for_session_nowait(self, channel_id: str, session_id: str) -> object:
+            # Like AgentManager: the chat's agent exists only under its own channel.
+            return self.agent if channel_id == "web" else None
+
+    manager = ChatChannelManager()
+    manager.agent = CardAgent()
+    runtime = AgentRuntime(
+        agent_manager=manager,
+        initializer=AsyncMock(),
+        plan_controller=FakePlanController(),
+    )
+    runtime._trigger_before_chat_request_hook = AsyncMock()
+    session_id = "voice-card-answer-session"
+    params = {"mode": "agent", "work_mode": "work"}
+    turn = AgentRequest(
+        request_id="typed", channel_id="web", session_id=session_id,
+        req_method=ReqMethod.CHAT_SEND, is_stream=True, params={**params, "query": "open notepad"},
+    )
+    await _collect_events(runtime.stream(turn, trigger_hook=False))
+
+    answer = AgentRequest(
+        request_id="voice-answer", channel_id="video_tool", session_id=session_id,
+        req_method=ReqMethod.CHAT_SEND, is_stream=streaming,
+        params={
+            **params, "query": "", "request_id": "call_cua", "source": "confirm_interrupt",
+            "answers": [{"question": "", "selected_options": ["allow_once"]}],
+        },
+    )
+    events = await asyncio.wait_for(
+        _collect_events(runtime.stream(answer, trigger_hook=False)) if streaming
+        else runtime.invoke(answer, trigger_hook=False),
+        timeout=0.5,
+    )
+
+    assert delivered == ["voice-answer"]
+    assert [(event.event_type, event.channel_id) for event in events] == [("chat.final", "video_tool")]
+
+
 def test_typed_input_still_supersedes_a_waiting_card() -> None:
     request = AgentRequest(
         request_id="r1", channel_id="web", session_id="chat-1",
